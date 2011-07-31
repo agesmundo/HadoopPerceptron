@@ -1,0 +1,91 @@
+Perceptron training prediction and evaluation for Hadoop
+reference for implementation : http://static.googleusercontent.com/external_content/untrusted_dlcp/research.google.com/en//pubs/archive/36266.pdf
+
+===========================================
+
+COMPILE AND CREATE JAR:
+
+# cd <HOME_DIR> 
+# javac -d class/ src/*.java
+# jar -cf jars/HP.jar -C class/ .
+
+
+===========================================
+
+RUN TRAIN
+
+# hadoop jar jars/HP.jar Train <training_iterations> <input_folder> <out_folder_prefix> [<init_weight_vector_folder>]
+
+see details of INPUT FILES FORMAT
+the output of each train iteration can be found in "<out_folder_prefix>_<iteration_id>" where <iteration_id> starts from 1
+
+
+============================================
+
+
+RUN PREDICTION
+
+# hadoop jar jars/HP.jar Predict <input_folder> <out_folder> <weight_folder> 
+
+
+===========================================
+
+
+RUN EVALUATION
+
+# hadoop jar jars/HP.jar Evaluate <input_folder> <outout_folder> <weight_folder>
+
+
+===========================================
+
+INPUT FILES FORMAT
+one sentence per line
+words divided by spaces
+input for Train and Evaluate need gold labels
+gold labels are appended to words
+words and gold labels are separed by a special string: defaultLabelSeparator = "_" defind in Sentence.java
+make sure this special string is not used inside words or lables 
+(also defaultFeatureSeparator = "|" defined in Perceptrong.java shell not appear neither in text or lables)
+input file with gold labels example:
+--------------------
+he_PRON and_CONJ young_ADJ Mary_NOUN walk_VERB
+John_NOUN is_VERB working_VERB
+--------------------
+
+
+===========================================
+
+PREDICT OUTPUT FILES FORMAT
+output from prediction has one sentence per line :
+<input_sentence>\t|||<label_sequence>
+example:
+--------------------
+he and young Mary walk	||| PRON CONJ ADJ NOUN VERB
+John is working	||| NOUN VERB VERB
+--------------------
+
+
+===========================================
+
+EVAL OUTPUT FILES FORMAT
+evaluation output a file with two lines:
+--------------------
+true	<number_of_correct_classifications>
+false	<number_of_wrong_classifications>
+--------------------
+
+
+===========================================
+
+WEIGHT FILE  FORMAT
+the weight file store the perceptron weight vector
+one weight per line
+format:
+<lable_to_emit>|<feature_string>	<weight>
+
+weight file example:
+~~~~~~~~~~~~~~~~
+VERB|previous_label=NOUN	0.25
+CONJ|length_cur_5	-0.25
+ADJ|pre_wa	-0.25
+~~~~~~~~~~~~~~~~
