@@ -25,7 +25,7 @@ the output of each train iteration can be found in "<out_folder_prefix>_<iterati
 
 RUN PREDICTION
 
-# hadoop jar jars/HP.jar Predict <input_text_folder> <out_folder> <weight_folder> 
+# hadoop jar jars/HP.jar Predict <input_folder> <out_folder> <weight_folder> 
 
 
 ===========================================
@@ -33,7 +33,7 @@ RUN PREDICTION
 
 RUN EVALUATION
 
-# hadoop jar jars/HP.jar Evaluate <input_text_folder> <output_folder> <weight_folder>
+# hadoop jar jars/HP.jar Evaluate <input_folder> <out_folder> <weight_folder>
 
 
 ===========================================
