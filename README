@@ -16,7 +16,7 @@ RUN TRAIN
 
 # hadoop jar jars/HP.jar Train <training_iterations> <input_folder> <out_folder_prefix> [<init_weight_vector_folder>]
 
-see details of INPUT FILES FORMAT
+see details of INPUT FILES FORMAT below
 the output of each train iteration can be found in "<out_folder_prefix>_<iteration_id>" where <iteration_id> starts from 1
 
 
