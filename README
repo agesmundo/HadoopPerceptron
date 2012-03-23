@@ -5,7 +5,8 @@ reference for implementation : http://static.googleusercontent.com/external_cont
 
 COMPILE AND CREATE JAR:
 
-# cd <HOME_DIR> 
+# git clone git://github.com/agesmundo/HadoopPerceptron.git
+# cd HadoopPerceptron
 # javac -d class/ src/*.java
 # jar -cf jars/HP.jar -C class/ .
 
