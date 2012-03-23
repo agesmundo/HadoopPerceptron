@@ -7,7 +7,7 @@ COMPILE AND CREATE JAR:
 
 # git clone git://github.com/agesmundo/HadoopPerceptron.git
 # cd HadoopPerceptron
-# javac -d class/ src/*.java
+# javac -cp <PATH/TO/hadoop-core-VERSION-.jar> -d class/ src/*.java
 # jar -cf jars/HP.jar -C class/ .
 
 
