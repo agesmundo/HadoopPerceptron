@@ -7,11 +7,14 @@ PREDICT_OUT_DIR=/outP
 EVAL_OUT_DIR=/outE
 WEIGHT_IN=/init
 
+#assign to HADOOP_CORE the path to the hadoop core jar, e.g.:
+#HADOOP_CORE=-cp /cluster/hadoop-1.0.1/hadoop-core-1.0.1.jar
+
 jr:jc
 	jar -cf jars/${JAR} -C class/ .
 
 jc:
-	javac -d class/ src/*.java
+	javac ${HADOOP_CORE} -d class/ src/*.java
 
 train:jr
 	hadoop jar jars/${JAR} Train ${ITERS} ${TRAIN_IN_DIR} ${TRAIN_OUT_DIR} ${WEIGHT_IN}
