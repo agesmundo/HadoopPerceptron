@@ -8,13 +8,19 @@ EVAL_OUT_DIR=/outE
 WEIGHT_IN=/init
 
 #assign to HADOOP_CORE the path to the hadoop core jar, e.g.:
-#HADOOP_CORE=-cp /cluster/hadoop-1.0.1/hadoop-core-1.0.1.jar
+#HADOOP_CORE=-cp /path/to/hadoop-core-VERSION.jar
+HADOOP_CORE=./jars/hadoop-core-1.0.1.jar
+
+#comman line parser:commons-cli-1.2.jar
+CLI=./jars/commons-cli-1.2.jar
+
+CP=-cp ${HADOOP_CORE}:${CLI}
 
 jr:jc
 	jar -cf jars/${JAR} -C class/ .
 
 jc:
-	javac ${HADOOP_CORE} -d class/ src/*.java
+	javac ${CP} -d class/ src/*.java
 
 train:jr
 	hadoop jar jars/${JAR} Train ${ITERS} ${TRAIN_IN_DIR} ${TRAIN_OUT_DIR} ${WEIGHT_IN}
