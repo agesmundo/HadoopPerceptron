@@ -1,0 +1,5 @@
+jars folder
+
+HP.jar			//HadoopPerceptron jar, created invoking make 
+commons-cli-1.2.jar	//commans line parser http://commons.apache.org/cli/
+hadoop-core-1.0.1.jar	//hadoop core with which the HadoopPerceptron toolkit was last time tested, feel free to update it and/or refer to a recent version in the Makefile
