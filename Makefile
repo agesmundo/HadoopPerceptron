@@ -26,10 +26,10 @@ train:jr clean_tr
 	hadoop jar jars/${JAR} Train -i ${TRAIN_IN_DIR} -o ${TRAIN_OUT_DIR} -N ${ITERS} -M 2 -R 1 -p /inParams
 
 predict:jr clean_pr
-	hadoop jar jars/${JAR} Predict ${PREDICT_IN_DIR} ${PREDICT_OUT_DIR} ${TRAIN_OUT_DIR}_${ITERS}
+	hadoop jar jars/${JAR} Predict -i ${PREDICT_IN_DIR} -o ${PREDICT_OUT_DIR} -p ${TRAIN_OUT_DIR}_${ITERS}
 
 eval:jr
-	hadoop jar jars/${JAR} Evaluate ${TRAIN_IN_DIR} ${EVAL_OUT_DIR} ${TRAIN_OUT_DIR}_${ITERS} 
+	hadoop jar jars/${JAR} Evaluate -i ${TRAIN_IN_DIR} -o ${EVAL_OUT_DIR} -p ${TRAIN_OUT_DIR}_${ITERS} 
 	hadoop fs -cat ${EVAL_OUT_DIR}/*
 
 clean_tr:

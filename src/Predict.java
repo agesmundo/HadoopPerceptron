@@ -1,5 +1,12 @@
 import java.io.IOException;
 import java.util.*;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.PosixParser;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.conf.*;
 import org.apache.hadoop.io.*;
@@ -8,8 +15,52 @@ import org.apache.hadoop.util.*;
 
 public class Predict extends Configured implements Tool {
 
+	//Keys to find HadoopPerceptron options in the configuration
+	static final String K_PARAMETERS_FOLDER="HP.parameters.folder";
+	static final String K_INPUT_FOLDER="HP.input.folder";
+	static final String K_OUTPUT_FOLDER="HP.output.folder";
+	static final String K_N_MAP="HP.number.map.tasks";
+	static final String K_N_REDUCE="HP.number.reduce.tasks";
+
+	static Options options=initOptions();
+	private static Options initOptions(){
+		Options options = new Options();
+
+		OptionBuilder.withArgName("input_folder");
+		OptionBuilder.hasArg(true);
+		OptionBuilder.withDescription("Folder in the hadoop dfs containing the text to be labelled.");
+		OptionBuilder.isRequired(true);
+		options.addOption(OptionBuilder.create("i"));
+
+		OptionBuilder.withArgName("output_folder");
+		OptionBuilder.hasArg(true);
+		OptionBuilder.withDescription("Folder in the hadoop dfs where the labelled text is going to be saved.");
+		OptionBuilder.isRequired(true);
+		options.addOption(OptionBuilder.create("o"));
+
+		OptionBuilder.withArgName("parameters_folder");
+		OptionBuilder.hasArg(true);
+		OptionBuilder.withDescription("Folder in the hadoop dfs containing the parameters of the model.");
+		OptionBuilder.isRequired(true);
+		options.addOption(OptionBuilder.create("p"));
+
+		OptionBuilder.withArgName("integer");
+		OptionBuilder.hasArg(true);
+		OptionBuilder.withDescription("Set recommended number of map tasks.");
+		OptionBuilder.withType(Integer.class);
+		options.addOption(OptionBuilder.create("M"));
+
+		OptionBuilder.withArgName("integer");
+		OptionBuilder.hasArg(true);
+		OptionBuilder.withDescription("Set recommended number of reduce tasks.");
+		OptionBuilder.withType(Integer.class);
+		options.addOption(OptionBuilder.create("R"));
+
+		return options;
+	}
+
 	public static class Map extends MapReduceBase implements
-			Mapper<LongWritable, Text, Text, Text> {
+	Mapper<LongWritable, Text, Text, Text> {
 
 		private Perceptron perceptron = new Perceptron();
 		JobConf conf = null;
@@ -21,7 +72,7 @@ public class Predict extends Configured implements Tool {
 
 		public void map(LongWritable key, Text value,
 				OutputCollector<Text, Text> output, Reporter reporter)
-				throws IOException {
+						throws IOException {
 			perceptron.readWeights(conf);
 
 			StringBuilder out = new StringBuilder();
@@ -45,10 +96,10 @@ public class Predict extends Configured implements Tool {
 	}
 
 	public static class Reduce extends MapReduceBase implements
-			Reducer<Text, Text, Text, Text> {
+	Reducer<Text, Text, Text, Text> {
 		public void reduce(Text key, Iterator<Text> values,
 				OutputCollector<Text, Text> output, Reporter reporter)
-				throws IOException {
+						throws IOException {
 			output.collect(key, values.next());
 		}
 	}
@@ -67,10 +118,19 @@ public class Predict extends Configured implements Tool {
 		conf.setInputFormat(TextInputFormat.class);
 		conf.setOutputFormat(TextOutputFormat.class);
 
-		FileInputFormat.setInputPaths(conf, new Path(args[0]));
-		FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+		FileInputFormat.setInputPaths(conf, new Path(conf.get(K_INPUT_FOLDER)));
+		FileOutputFormat.setOutputPath(conf, new Path(conf.get(K_OUTPUT_FOLDER)));
 
-		if(DistributedCacheUtils.loadParametersFolder(args[2], conf)==1)return 1;
+		int nMap=conf.getInt(K_N_MAP,-1);
+		if (nMap>0){
+			conf.setNumMapTasks(nMap);
+		}
+		int nRed=conf.getInt(K_N_REDUCE,-1);
+		if (nRed>0){
+			conf.setNumReduceTasks(nRed);
+		}
+		
+		if(DistributedCacheUtils.loadParametersFolder(conf.get(K_PARAMETERS_FOLDER), conf)==1)return 1;
 
 		JobClient.runJob(conf);
 
@@ -78,13 +138,30 @@ public class Predict extends Configured implements Tool {
 	}
 
 	public static void main(String[] args) throws Exception {
-		if (args.length != 3) {
-			throw new Exception(
-					"Wrong number of arguments.\n "
-							+ "Usage: Predict <input_folder> <outout_folder> <weight_folder>");
+		try{
+			CommandLine cmd = new PosixParser().parse(options, args);
+
+//			if (args.length != 3) {
+//				throw new Exception(
+//						"Wrong number of arguments.\n "
+//								+ "Usage: Predict <input_folder> <outout_folder> <weight_folder>");
+//			}
+
+			Configuration conf= new Configuration();
+			conf.set(K_INPUT_FOLDER, cmd.getOptionValue("i"));
+			conf.set(K_OUTPUT_FOLDER, cmd.getOptionValue("o"));
+			conf.set(K_PARAMETERS_FOLDER, cmd.getOptionValue("p"));
+			if (cmd.hasOption( "M" )) conf.set(K_N_MAP,cmd.getOptionValue("M"));
+			if (cmd.hasOption( "R" )) conf.set(K_N_REDUCE,cmd.getOptionValue("R"));
+
+			int res = ToolRunner.run(conf, new Predict(), new String[0]);
+			System.exit(res);
 		}
 
-		int res = ToolRunner.run(new Configuration(), new Predict(), args);
-		System.exit(res);
+		catch( ParseException e ) {
+			System.err.println("\nError while parsing command line:\n"+e.getMessage()+"\n");
+			HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp( "Predict -i <input_folder> -o <output_folder> -p <parameters_folder> [options]", options );
+		}
 	}
 }

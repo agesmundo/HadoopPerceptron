@@ -7,7 +7,6 @@ import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.util.*;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionBuilder;
@@ -17,7 +16,7 @@ import org.apache.commons.cli.ParseException;
 public class Train extends Configured implements Tool {
 
 	//Keys to find HadoopPerceptron options in the configuration
-	static final String K_HAS_INPUT_PARAMS="HP.has.input.params";
+	static final String K_HAS_INPUT_PARAMS="HP.has.input.params"; //TODO? useless?
 	static final String K_PARAMETERS_FOLDER="HP.parameters.folder";
 	static final String K_INPUT_FOLDER="HP.input.folder";
 	static final String K_OUTPUT_FOLDER="HP.output.folder";
@@ -128,8 +127,7 @@ public class Train extends Configured implements Tool {
 			while (values.hasNext()) {
 				sum += values.next().get();
 			}
-			DoubleWritable weight = new DoubleWritable(sum
-					/ conf.getNumMapTasks());
+			DoubleWritable weight = new DoubleWritable(sum	/ conf.getNumMapTasks()); //TODO? test division, should not be there
 			output.collect(key, weight);
 		}
 	}
@@ -156,7 +154,6 @@ public class Train extends Configured implements Tool {
 			if (nMap>0){
 				conf.setNumMapTasks(nMap);
 			}
-			
 			int nRed=conf.getInt(K_N_REDUCE,-1);
 			if (nRed>0){
 				conf.setNumReduceTasks(nRed);
@@ -181,11 +178,9 @@ public class Train extends Configured implements Tool {
 	public static void main(String[] args) throws Exception {
 
 		try{
-			CommandLineParser parser = new PosixParser();
-			CommandLine cmd = parser.parse( options, args);
+			CommandLine cmd = new PosixParser().parse(options, args);
 
 			int	numIterations= Integer.parseInt(cmd.getOptionValue("N",D_N));
-
 			String inputDir = cmd.getOptionValue("i");
 			String outputDirPref = cmd.getOptionValue("o");
 
@@ -210,12 +205,12 @@ public class Train extends Configured implements Tool {
 
 
 		catch( ParseException e ) {
-			System.err.println("\nError while parsing command line\n"+e.getMessage()+"\n");
+			System.err.println("\nError while parsing command line:\n"+e.getMessage()+"\n");
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp( "Train -i <input_folder> -o <output_folder> [options]", options );
 		}
 		catch( NumberFormatException e ) {
-			System.err.println("\nError while parsing command line\n"+e.getMessage()+"\n");
+			System.err.println("\nError while parsing command line:\n"+e.getMessage()+"\n");
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp( "Train -i <input_folder> -o <output_folder> [options]", options );
 		}
