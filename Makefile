@@ -1,6 +1,6 @@
 JAR=HP.jar
 ITERS=4
-TRAIN_IN_DIR=/in1
+TRAIN_IN_DIR=/in3
 PREDICT_IN_DIR=/in2
 TRAIN_OUT_DIR=/outT
 PREDICT_OUT_DIR=/outP
@@ -23,7 +23,9 @@ jc:
 	javac ${CP} -d class/ src/*.java
 
 train:jr
-	hadoop jar jars/${JAR} Train ${ITERS} ${TRAIN_IN_DIR} ${TRAIN_OUT_DIR} ${WEIGHT_IN}
+	hadoop jar jars/${JAR} Train -i ${TRAIN_IN_DIR} -o ${TRAIN_OUT_DIR} -N 2
+	#hadoop jar jars/${JAR} Train -N ${ITERS} -i ${TRAIN_IN_DIR} -o ${TRAIN_OUT_DIR}
+#-w ${WEIGHT_IN}
 
 predict:jr
 	hadoop jar jars/${JAR} Predict ${PREDICT_IN_DIR} ${PREDICT_OUT_DIR} ${TRAIN_OUT_DIR}_${ITERS} 
@@ -31,4 +33,5 @@ predict:jr
 eval:jr
 	hadoop jar jars/${JAR} Evaluate ${TRAIN_IN_DIR} ${EVAL_OUT_DIR} ${TRAIN_OUT_DIR}_${ITERS} 
 	hadoop fs -cat ${EVAL_OUT_DIR}/*
-
+clean:
+	hadoop fs -rmr ${TRAIN_OUT_DIR}*

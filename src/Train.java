@@ -1,17 +1,25 @@
 import java.io.IOException;
 import java.util.*;
 
+
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.conf.*;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.util.*;
 import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.PosixParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 public class Train extends Configured implements Tool {
 
 	public static class Map extends MapReduceBase implements
-			Mapper<LongWritable, Text, Text, DoubleWritable> {
+	Mapper<LongWritable, Text, Text, DoubleWritable> {
 
 		private Perceptron perceptron = new Perceptron();
 		JobConf conf = null;
@@ -23,7 +31,7 @@ public class Train extends Configured implements Tool {
 
 		public void map(LongWritable key, Text value,
 				OutputCollector<Text, DoubleWritable> output, Reporter reporter)
-				throws IOException {
+						throws IOException {
 			if (conf.getBoolean("has.input.weight", false))
 				perceptron.readWeights(conf);
 
@@ -45,7 +53,7 @@ public class Train extends Configured implements Tool {
 	}
 
 	public static class Reduce extends MapReduceBase implements
-			Reducer<Text, DoubleWritable, Text, DoubleWritable> {
+	Reducer<Text, DoubleWritable, Text, DoubleWritable> {
 		JobConf conf = null;
 
 		@Override
@@ -55,7 +63,7 @@ public class Train extends Configured implements Tool {
 
 		public void reduce(Text key, Iterator<DoubleWritable> values,
 				OutputCollector<Text, DoubleWritable> output, Reporter reporter)
-				throws IOException {
+						throws IOException {
 			// sum items with same key and divide by number of clusters
 			double sum = 0;
 			while (values.hasNext()) {
@@ -109,34 +117,90 @@ public class Train extends Configured implements Tool {
 
 	public static void main(String[] args) throws Exception {
 
-		if (args.length != 3 && args.length != 4) {
-			throw new Exception(
-					"Wrong number of arguments.\n "
-							+ "Usage: Train <number_iterations> <input_dir> <output_prefix> [<weight_vector>]");
-		}
+		//build command line parser
+		Options options = new Options();
 
-		int numIterations = Integer.parseInt(args[0]);
-		String inputDir = args[1];
-		String outputDirPref = args[2];
+		OptionBuilder.withArgName("input_folder");
+		OptionBuilder.hasArg(true);
+		OptionBuilder.withDescription("Folder in the hadoop dfs containing the training corpus.");
+		OptionBuilder.isRequired(true);
+		options.addOption(OptionBuilder.create("i"));
 
-		String[] runArgs = new String[2 + (args.length - 3)];
-		runArgs[0] = inputDir;
-		runArgs[1] = outputDirPref + "_" + 1;
-		if (runArgs.length == 3)
-			runArgs[2] = args[3];
+		OptionBuilder.withArgName("output_folder");
+		OptionBuilder.hasArg(true);
+		OptionBuilder.withDescription("Folder in the hadoop dfs where the model parameters are going to be saved.");
+		OptionBuilder.isRequired(true);
+		options.addOption(OptionBuilder.create("o"));
 
-		System.out.println("########### Runing iteration: 1");
-		int res = ToolRunner.run(new Configuration(), new Train(), runArgs);
+		/*		
+		final int nDefault=1;
+		OptionBuilder.withArgName("integer");
+	    OptionBuilder.hasArg(true);
+	    OptionBuilder.withDescription("Perceptron training iteration per node. default value is "+nDefault+".");
+	    options.addOption(OptionBuilder.create("n"));
+		 */
 
-		for (int i = 1; i < numIterations; i++) {
-			runArgs = new String[3];
+		final int NDefault=1;//TODO check how to set defaults
+		OptionBuilder.withArgName("integer");
+		OptionBuilder.hasArg(true);
+		OptionBuilder.withDescription("Number of Parameter Mixing iterations. default value is "+NDefault+".");
+		options.addOption(OptionBuilder.create("N"));
+
+		OptionBuilder.withArgName("parameters_folder");
+		OptionBuilder.hasArg(true);
+		OptionBuilder.withDescription("Folder in the hadoop dfs containing the parameters used to initialize the model.");
+		options.addOption(OptionBuilder.create("w"));
+
+		//		if (args.length != 3 && args.length != 4) {
+		//			throw new Exception(
+		//					"Wrong number of arguments.\n "
+		//							+ "Usage: Train <number_iterations> <input_dir> <output_prefix> [<weight_vector>]");
+		//		}
+
+		try{
+			CommandLineParser parser = new PosixParser();
+			CommandLine cmd = parser.parse( options, args);
+
+//			int numIterations=NDefault;
+//			if( cmd.hasOption( "N" ) ) {
+			int	numIterations= Integer.parseInt(cmd.getOptionValue("N",""+NDefault));
+//			}
+			String inputDir = cmd.getOptionValue("i");
+			String outputDirPref = cmd.getOptionValue("o");
+
+			String[] runArgs = new String[2];
+			if (cmd.hasOption( "w" )){
+				runArgs = new String[3];
+				runArgs[2] = cmd.getOptionValue("w");
+			}
 			runArgs[0] = inputDir;
-			runArgs[1] = outputDirPref + "_" + (i + 1);
-			runArgs[2] = outputDirPref + "_" + i;
+			runArgs[1] = outputDirPref + "_" + 1;
 
-			System.out.println("########### Runing iteration: " + (i + 1));
-			res = ToolRunner.run(new Configuration(), new Train(), runArgs);
+			System.out.println("########### Runing iteration: 1");
+			int res = ToolRunner.run(new Configuration(), new Train(), runArgs);
+
+			for (int i = 1; i < numIterations; i++) {
+				runArgs = new String[3];
+				runArgs[0] = inputDir;
+				runArgs[1] = outputDirPref + "_" + (i + 1);
+				runArgs[2] = outputDirPref + "_" + i;
+
+				System.out.println("########### Runing iteration: " + (i + 1));
+				res = ToolRunner.run(new Configuration(), new Train(), runArgs);
+			}
+			System.exit(res);
+		}	    
+		catch( ParseException e ) {
+			System.err.println(e.getMessage()+"\n");
+			HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp( "Train -i <input_folder> -o <output_folder> [options]", options );
 		}
-		System.exit(res);
+		catch( NumberFormatException e ) {
+			System.err.println(e.getMessage()+"\n");
+//			System.err.println("An integer para\n");
+			HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp( "Train -i <input_folder> -o <output_folder> [options]", options );
+		}
+
 	}
 }
