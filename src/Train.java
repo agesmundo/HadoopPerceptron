@@ -133,17 +133,19 @@ public class Train extends Configured implements Tool {
 		options.addOption(OptionBuilder.create("o"));
 
 		/*		
-		final int nDefault=1;
+		final Integer NDefault=new Integer(1);
 		OptionBuilder.withArgName("integer");
 	    OptionBuilder.hasArg(true);
 	    OptionBuilder.withDescription("Perceptron training iteration per node. default value is "+nDefault+".");
+	    OptionBuilder.withType(Integer.class);
 	    options.addOption(OptionBuilder.create("n"));
 		 */
 
-		final int NDefault=1;//TODO check how to set defaults
+		final Integer NDefault=new Integer(1);//TODO check how to set defaults
 		OptionBuilder.withArgName("integer");
 		OptionBuilder.hasArg(true);
 		OptionBuilder.withDescription("Number of Parameter Mixing iterations. default value is "+NDefault+".");
+		OptionBuilder.withType(Integer.class);
 		options.addOption(OptionBuilder.create("N"));
 
 		OptionBuilder.withArgName("parameters_folder");
@@ -191,7 +193,7 @@ public class Train extends Configured implements Tool {
 			System.exit(res);
 		}	    
 		catch( ParseException e ) {
-			System.err.println(e.getMessage()+"\n");
+			System.err.println("\nError while parsing command line\n"+e.getMessage()+"\n");
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp( "Train -i <input_folder> -o <output_folder> [options]", options );
 		}

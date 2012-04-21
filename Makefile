@@ -23,7 +23,7 @@ jc:
 	javac ${CP} -d class/ src/*.java
 
 train:jr
-	hadoop jar jars/${JAR} Train -i ${TRAIN_IN_DIR} -o ${TRAIN_OUT_DIR} -N 2
+	hadoop jar jars/${JAR} Train -i ${TRAIN_IN_DIR} -o ${TRAIN_OUT_DIR} -N t
 	#hadoop jar jars/${JAR} Train -N ${ITERS} -i ${TRAIN_IN_DIR} -o ${TRAIN_OUT_DIR}
 #-w ${WEIGHT_IN}
 
