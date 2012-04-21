@@ -1,14 +1,11 @@
 import java.io.IOException;
 import java.util.*;
-
-
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.mapred.FileAlreadyExistsException;
 import org.apache.hadoop.conf.*;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.util.*;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.PosixParser;
@@ -152,9 +149,6 @@ public class Train extends Configured implements Tool {
 			conf.setInputFormat(TextInputFormat.class);
 			conf.setOutputFormat(TextOutputFormat.class);
 
-//			conf.setNumMapTasks(4);
-//			conf.setNumReduceTasks(3);
-
 			FileInputFormat.setInputPaths(conf, new Path(conf.get(K_INPUT_FOLDER)));
 			FileOutputFormat.setOutputPath(conf, new Path(conf.get(K_OUTPUT_FOLDER)));
 
@@ -170,19 +164,8 @@ public class Train extends Configured implements Tool {
 			
 			String paramFolder=conf.get(K_PARAMETERS_FOLDER);
 			if (paramFolder!=null) {// init params are specified
-				try {
-					FileSystem fs = FileSystem.get(conf);
-					FileStatus[] status = fs.listStatus(new Path(paramFolder));
-					for (int j = 0; j < status.length; j++) {
-						if (Perceptron.isWeightFile(status[j])) {
-							DistributedCache.addCacheFile(status[j].getPath()
-									.toUri(), conf);
-						}
-					}
-					conf.setBoolean(K_HAS_INPUT_PARAMS, true);
-				} catch (Exception e) {
-					System.out.println("File not found");
-				}
+				if(DistributedCacheUtils.loadParametersFolder(paramFolder, conf)==1)return 1;
+				conf.setBoolean(K_HAS_INPUT_PARAMS, true);
 			}
 
 			JobClient.runJob(conf);
@@ -213,17 +196,16 @@ public class Train extends Configured implements Tool {
 			invariantConf.set(K_INPUT_FOLDER, inputDir);
 			
 			Configuration conf;
-			int exitStatus=1;
 			for (int i = 0; i < numIterations; i++) {
 				conf= new Configuration(invariantConf);
 
 				conf.set(K_OUTPUT_FOLDER, outputDirPref+"_"+(i+1));
 				if (i>0)conf.set(K_PARAMETERS_FOLDER, outputDirPref+"_"+i);
 
-				System.out.println("\n====================\nRuning iteration: " + (i + 1));
-				exitStatus = ToolRunner.run(conf, new Train(), new String[0]);//arguments are passed via the configuration
+				System.out.println("\n====================\nPARAMETER MIXING ITERATION: " + (i + 1));
+				if( ToolRunner.run(conf, new Train(), new String[0]) ==1) System.exit(1);//arguments are passed via the configuration
 			}
-			System.exit(exitStatus);
+			System.exit(0);
 		}
 
 

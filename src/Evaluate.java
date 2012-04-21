@@ -1,9 +1,5 @@
 import java.io.IOException;
 import java.util.*;
-
-import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.conf.*;
 import org.apache.hadoop.io.*;
@@ -81,18 +77,7 @@ public class Evaluate extends Configured implements Tool {
 		FileInputFormat.setInputPaths(conf, new Path(args[0]));
 		FileOutputFormat.setOutputPath(conf, new Path(args[1]));
 
-		try {// read weight vector
-			FileSystem fs = FileSystem.get(conf);
-			FileStatus[] status = fs.listStatus(new Path(args[2]));
-			for (int j = 0; j < status.length; j++) {
-				if (Perceptron.isWeightFile(status[j])) {
-					DistributedCache.addCacheFile(status[j].getPath().toUri(),
-							conf);
-				}
-			}
-		} catch (Exception e) {
-			System.out.println("File not found");
-		}
+		if(DistributedCacheUtils.loadParametersFolder(args[2], conf)==1)return 1;
 
 		JobClient.runJob(conf);
 

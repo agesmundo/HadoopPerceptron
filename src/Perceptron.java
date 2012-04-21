@@ -5,9 +5,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
@@ -62,11 +60,6 @@ public class Perceptron {
 			// NB need to register label if missing
 			LabelLib.storeLabel(Features.getLabel(tokens[0]));
 		}
-	}
-
-	public static boolean isWeightFile(FileStatus status) {
-		String tokens[] = status.getPath().toString().split("/");
-		return !tokens[tokens.length - 1].contains("_");
 	}
 
 	public void collectOutput(OutputCollector<Text, DoubleWritable> output)
