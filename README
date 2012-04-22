@@ -35,7 +35,7 @@ $ hadoop fs -put test/ /
 # run the training on the sample train set with "$ make train" or:
 $ hadoop jar jars/HP.jar Train -i /test/train_folder -o /test/train_out -N 2 
 # the final parameters of the model will be stored in /test/train_out_2
-# to display the learned parameters:
+# to display the learnt parameters:
 $ hadoop fs -cat /test/train_out_2/*
 # for more details on the format of the parameter files see the WEIGHT FILE FORMAT section below
 
@@ -85,9 +85,9 @@ one sentence per line
 words divided by spaces
 input for Train and Evaluate need gold labels
 gold labels are appended to words
-words and gold labels are separed by a special string: defaultLabelSeparator = "_" defind in Sentence.java
-make sure this special string is not used inside words or lables 
-(also defaultFeatureSeparator = "|" defined in Perceptrong.java shell not appear neither in text or lables)
+words and gold labels are separated by a special string: defaultLabelSeparator = "_" defined in Sentence.java
+make sure this special string is not used inside words or labels 
+(also defaultFeatureSeparator = "|" defined in Perceptrong.java shell not appear neither in text or labels)
 input file with gold labels example:
 --------------------
 he_PRON and_CONJ young_ADJ Mary_NOUN walk_VERB
@@ -123,7 +123,7 @@ WEIGHT FILE FORMAT
 the weight file store the perceptron weight vector
 one weight per line
 format:
-<candidate_lable>|<feature_string>	<weight>
+<candidate_label>|<feature_string>	<weight>
 
 weight file example:
 ~~~~~~~~~~~~~~~~
