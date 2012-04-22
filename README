@@ -126,9 +126,9 @@ format:
 <candidate_label>|<feature_string>	<weight>
 
 weight file example:
-~~~~~~~~~~~~~~~~
+--------------------
 VERB|previous_label=NOUN	0.25
 CONJ|length_cur_5	-0.25
 ADJ|pre_wa	-0.25
-~~~~~~~~~~~~~~~~
+--------------------
 see Features.java for more details
