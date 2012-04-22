@@ -1,5 +1,8 @@
 import java.io.IOException;
 import java.util.*;
+
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.mapred.FileAlreadyExistsException;
 import org.apache.hadoop.conf.*;
@@ -26,15 +29,15 @@ public class Train extends Configured implements Tool {
 	static final String K_N_MAP="HP.number.map.tasks";
 	static final String K_N_REDUCE="HP.number.reduce.tasks";
 	static final String K_N_SENTENCE_ITERATIONS="HP.number.sentence.iterations";
-	static final String K_PERCEPTRON_UPDATE="HP.perceptron.update";
+	static final String K_PERCEPTRON_TYPE="HP.perceptron.type";
 
 	//Defaul values for options
 	static final int D_N=1;
 	static final int D_S=1;
-	static final String D_u="P";
+	static final String D_P="P";
 	
 	//Range of values for options
-	static final String V_u="P|PA|AV";
+	static final String V_P="P|PA|AV";
 	
 	static Options options=initOptions();
 	private static Options initOptions(){
@@ -85,15 +88,15 @@ public class Train extends Configured implements Tool {
 		OptionBuilder.withType(Integer.class);
 		options.addOption(OptionBuilder.create("R"));
 
-		OptionBuilder.withArgName("("+V_u+")");
+		OptionBuilder.withArgName("("+V_P+")");
 		OptionBuilder.hasArg(true);
 		OptionBuilder.withDescription("Set perceptron parameters update technique. Possible values are:" +
 				"\n\tP:  standard perceptron update." +
 				"\n\tPA: passive-aggressive perceptron update." +
 				"\n\tAV: averaged perceptron"+
-				"\n default value is "+D_u+".");
+				"\n default value is "+D_P+".");
 		OptionBuilder.withType(Integer.class);
-		options.addOption(OptionBuilder.create("u"));
+		options.addOption(OptionBuilder.create("P"));
 		return options;
 	}
 
@@ -101,16 +104,16 @@ public class Train extends Configured implements Tool {
 	Mapper<LongWritable, Text, Text, DoubleWritable> {
 
 		private Perceptron perceptron;
-		JobConf conf = null;
+		JobConf conf;
 
 		@Override
 		public void configure(JobConf jc) {
 			conf = jc;
 			
-			String up = conf.get(K_PERCEPTRON_UPDATE);
-			if(up==null || up.equals("P"))	perceptron = new PerceptronStandard();
-			else if(up.equals("PA"))perceptron = new PerceptronPassiveAggressive();
-					
+			String pType = conf.get(K_PERCEPTRON_TYPE);
+			if(pType==null || pType.equals("P"))	perceptron = new PerceptronStandard();
+			else if(pType.equals("PA"))perceptron = new PerceptronPassiveAggressive();
+			else if(pType.equals("AV"))perceptron = new PerceptronAveraged();
 			
 			if (conf.getBoolean(K_HAS_INPUT_PARAMS, false))
 				perceptron.readWeights(conf);
@@ -226,9 +229,9 @@ public class Train extends Configured implements Tool {
 			if (cmd.hasOption( "M" )) invariantConf.set(K_N_MAP,cmd.getOptionValue("M"));
 			if (cmd.hasOption( "R" )) invariantConf.set(K_N_REDUCE,cmd.getOptionValue("R"));
 			if (cmd.hasOption( "p" )) invariantConf.set(K_PARAMETERS_FOLDER, cmd.getOptionValue("p")); //this is going to be overwritten for iterations different from the first
-			if (cmd.hasOption( "u" )){
-				if(!Arrays.asList(V_u.split("|")).contains(cmd.getOptionValue("u")))throw new ParseException("The allowed values for option -u are: ("+V_u+")");
-				invariantConf.set(K_PERCEPTRON_UPDATE, cmd.getOptionValue("u",D_u));
+			if (cmd.hasOption( "P" )){
+				if(!Arrays.asList(V_P.split("\\|")).contains(cmd.getOptionValue("P")))throw new ParseException("The allowed values for option -P are: ("+V_P+")");
+				invariantConf.set(K_PERCEPTRON_TYPE, cmd.getOptionValue("P"));
 			}
 				
 			Configuration conf;

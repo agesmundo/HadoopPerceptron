@@ -70,7 +70,7 @@ public abstract class Perceptron extends LinearModel{
 	 *            Name of the feature.
 	 * @return The index of the feature.
 	 */
-	private int getAndRegFeatID(String feat) {
+	protected int getAndRegFeatID(String feat) {
 		Integer id = (Integer) feat2id.get(feat);
 		// if already in the lib
 		if (id != null) {
