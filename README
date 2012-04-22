@@ -3,7 +3,7 @@ reference for implementation : http://static.googleusercontent.com/external_cont
 
 ===========================================
 
-#1) COMPILE AND CREATE JAR:
+1) COMPILE AND CREATE JAR:
 
 $ git clone git://github.com/agesmundo/HadoopPerceptron.git
 $ cd HadoopPerceptron
@@ -16,7 +16,7 @@ $ make
 
 ===========================================
 
-RUN TRAIN:
+2) RUN TRAIN:
 
 # usage:
 $ hadoop jar jars/HP.jar Train -i <input_folder> -o <output_folder_prefix> [options]
@@ -34,12 +34,15 @@ $ hadoop fs -put test/ /
 
 # run the training on the sample train set with "$ make train" or:
 $ hadoop jar jars/HP.jar Train -i /test/train_folder -o /test/train_out -N 2 
-# the final parameters of the model will be stored in /test/train_folder_2
+# the final parameters of the model will be stored in /test/train_out_2
+# to display the learned parameters:
+$ hadoop fs -cat /test/train_out_2/*
+# for more details on the format of the parameter files see the WEIGHT FILE FORMAT section below
 
 ============================================
 
 
-RUN PREDICTION:
+3) RUN PREDICTION:
 
 # usage:
 $ hadoop jar jars/HP.jar Predict -i <input_folder> -o <output_folder> -p <parameters_folder> [options]
@@ -53,11 +56,13 @@ RUN PREDICTION TEST:
 $ hadoop jar jars/HP.jar Predict -i /test/test_folder -o /test/predict_out -p /test/train_out_2
 # you can see the generated labelled text with:
 $ hadoop fs -cat /test/predict_out/*
+# for more details on the format of the generated labelled text files see the PREDICTION OUTPUT FILES FORMAT section below
+
 
 ===========================================
 
 
-RUN EVALUATION:
+4) RUN EVALUATION:
 
 # usage:
 $ hadoop jar jars/HP.jar Evaluate-i <input_folder> -o <output_folder> -p <parameters_folder> [options]
@@ -71,7 +76,7 @@ RUN EVALUATION TEST:
 $ hadoop jar jars/HP.jar Evaluate -i /test/train_folder -o /test/evaluate_out -p /test/train_out_2
 # you can see the generated labelled text with:
 $ hadoop fs -cat /test/evaluate_out/*
-
+# for more details on the format of the accuracy files see the EVALUATION OUTPUT FILES FORMAT section below
 
 ===========================================
 
@@ -92,19 +97,19 @@ John_NOUN is_VERB working_VERB
 
 ===========================================
 
-PREDICT OUTPUT FILES FORMAT
+PREDICTION OUTPUT FILES FORMAT
 output from prediction has one sentence per line :
-<input_sentence>\t|||<label_sequence>
+<input_sentence>\t|||\t<label_sequence>
 example:
 --------------------
-he and young Mary walk	||| PRON CONJ ADJ NOUN VERB
-John is working	||| NOUN VERB VERB
+he and young Mary walk	|||	PRON CONJ ADJ NOUN VERB
+John is working	|||	NOUN VERB VERB
 --------------------
 
 
 ===========================================
 
-EVAL OUTPUT FILES FORMAT
+EVALUATION OUTPUT FILES FORMAT
 evaluation output a file with two lines:
 --------------------
 true	<number_of_correct_classifications>
@@ -114,11 +119,11 @@ false	<number_of_wrong_classifications>
 
 ===========================================
 
-WEIGHT FILE  FORMAT
+WEIGHT FILE FORMAT
 the weight file store the perceptron weight vector
 one weight per line
 format:
-<lable_to_emit>|<feature_string>	<weight>
+<candidate_lable>|<feature_string>	<weight>
 
 weight file example:
 ~~~~~~~~~~~~~~~~
@@ -126,3 +131,4 @@ VERB|previous_label=NOUN	0.25
 CONJ|length_cur_5	-0.25
 ADJ|pre_wa	-0.25
 ~~~~~~~~~~~~~~~~
+see Features.java for more details

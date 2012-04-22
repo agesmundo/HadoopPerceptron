@@ -83,7 +83,7 @@ public class Predict extends Configured implements Tool {
 			perceptron.readWeights(conf);
 
 			StringBuilder out = new StringBuilder();
-			out.append("|||");
+			out.append("|||\t");
 
 			Sentence sentence = new Sentence(value.toString());
 			String predLabel = "";

@@ -44,7 +44,7 @@ public class Train extends Configured implements Tool {
 		OptionBuilder.isRequired(true);
 		options.addOption(OptionBuilder.create("i"));
 
-		OptionBuilder.withArgName("output_folder");
+		OptionBuilder.withArgName("output_folder_prefix");
 		OptionBuilder.hasArg(true);
 		OptionBuilder.withDescription("Prefix of the name for the folder in the hadoop dfs where the model parameters are going to be saved.");
 		OptionBuilder.isRequired(true);

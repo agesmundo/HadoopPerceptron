@@ -16,7 +16,7 @@ import org.apache.hadoop.util.*;
 public class Evaluate extends Configured implements Tool {
 
 	//Usage
-	static final String USAGE = "Predict -i <input_folder> -o <output_folder> -p <parameters_folder> [options]";
+	static final String USAGE = "Evaluate -i <input_folder> -o <output_folder> -p <parameters_folder> [options]";
 			
 	//Keys to find HadoopPerceptron options in the configuration
 	static final String K_PARAMETERS_FOLDER="HP.parameters.folder";
