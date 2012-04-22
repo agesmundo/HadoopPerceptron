@@ -1,4 +1,4 @@
-jars folder
+jar files folder
 
 HP.jar			//HadoopPerceptron jar, created invoking make 
 commons-cli-1.2.jar	//commans line parser http://commons.apache.org/cli/
