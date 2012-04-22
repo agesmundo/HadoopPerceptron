@@ -17,7 +17,7 @@ public class Train extends Configured implements Tool {
 
 	//Usage
 	static final String USAGE = "Train -i <input_folder> -o <output_folder> [options]";
-	
+
 	//Keys to find HadoopPerceptron options in the configuration
 	static final String K_HAS_INPUT_PARAMS="HP.has.input.params"; //TODO? useless?
 	static final String K_PARAMETERS_FOLDER="HP.parameters.folder";
@@ -25,11 +25,12 @@ public class Train extends Configured implements Tool {
 	static final String K_OUTPUT_FOLDER="HP.output.folder";
 	static final String K_N_MAP="HP.number.map.tasks";
 	static final String K_N_REDUCE="HP.number.reduce.tasks";
-	
+	static final String K_N_SENTENCE_ITERATIONS="HP.number.sentence.iterations";
+
 	//Defaul values for options
-	static final String D_N="1";
-	static final String D_n="1";
-	
+	static final int D_N=1;
+	static final int D_S=1;
+
 	static Options options=initOptions();
 	private static Options initOptions(){
 		Options options = new Options();
@@ -50,13 +51,11 @@ public class Train extends Configured implements Tool {
 		OptionBuilder.isRequired(true);
 		options.addOption(OptionBuilder.create("o"));
 
-		/*		
 		OptionBuilder.withArgName("integer");
-	    OptionBuilder.hasArg(true);
-	    OptionBuilder.withDescription("Perceptron training iteration per node. default value is "+D_n+".");
-	    OptionBuilder.withType(Integer.class);
-	    options.addOption(OptionBuilder.create("n"));
-		 */
+		OptionBuilder.hasArg(true);
+		OptionBuilder.withDescription("Number of times the training is consecutively repeated on a single sentence by a map task. default value is "+D_S+".");
+		OptionBuilder.withType(Integer.class);
+		options.addOption(OptionBuilder.create("S"));
 
 		OptionBuilder.withArgName("integer");
 		OptionBuilder.hasArg(true);
@@ -68,7 +67,7 @@ public class Train extends Configured implements Tool {
 		OptionBuilder.hasArg(true);
 		OptionBuilder.withDescription("Folder in the hadoop dfs containing the parameters used to initialize the model.");
 		options.addOption(OptionBuilder.create("p"));
-		
+
 		OptionBuilder.withArgName("integer");
 		OptionBuilder.hasArg(true);
 		OptionBuilder.withDescription("Set recommended number of map tasks.");
@@ -80,10 +79,10 @@ public class Train extends Configured implements Tool {
 		OptionBuilder.withDescription("Set recommended number of reduce tasks.");
 		OptionBuilder.withType(Integer.class);
 		options.addOption(OptionBuilder.create("R"));
-		
+
 		return options;
 	}
-	
+
 	public static class Map extends MapReduceBase implements
 	Mapper<LongWritable, Text, Text, DoubleWritable> {
 
@@ -93,25 +92,31 @@ public class Train extends Configured implements Tool {
 		@Override
 		public void configure(JobConf jc) {
 			conf = jc;
+			if (conf.getBoolean(K_HAS_INPUT_PARAMS, false))
+				perceptron.readWeights(conf);
 		}
 
 		public void map(LongWritable key, Text value,
 				OutputCollector<Text, DoubleWritable> output, Reporter reporter)
 						throws IOException {
-			if (conf.getBoolean(K_HAS_INPUT_PARAMS, false))
-				perceptron.readWeights(conf);
 
 			Sentence sentence = new Sentence(value.toString());
-			String prevPredLabel = "";
+			String prevPredLabel;
 
-			for (int i = 0; i < sentence.size(); i++) {
+			for(int j=0;j<conf.getInt(K_N_SENTENCE_ITERATIONS, D_S);j++){
+				prevPredLabel = "";
 
-				prevPredLabel = perceptron.train(Features.getFeatures(sentence
-						.getWord(i - 1), sentence.getWord(i), sentence
-						.getWord(i + 1), prevPredLabel), sentence
-						.getGoldLabel(i));
+				for (int i = 0; i < sentence.size(); i++) {
+
+					prevPredLabel = perceptron.train(Features.getFeatures(
+							sentence.getWord(i - 1), 
+							sentence.getWord(i), 
+							sentence.getWord(i + 1), 
+							prevPredLabel
+							),
+							sentence.getGoldLabel(i));
+				}
 			}
-
 			// <feats id, score>
 			perceptron.collectOutput(output);
 		}
@@ -134,7 +139,8 @@ public class Train extends Configured implements Tool {
 			while (values.hasNext()) {
 				sum += values.next().get();
 			}
-			DoubleWritable weight = new DoubleWritable(sum	/ conf.getNumMapTasks()); //TODO? test division, should not be there
+			DoubleWritable weight = new DoubleWritable(sum);
+			//			DoubleWritable weight = new DoubleWritable(sum	/ conf.getNumMapTasks()); //TODO what is the best way to normalize?
 			output.collect(key, weight);
 		}
 	}
@@ -166,7 +172,7 @@ public class Train extends Configured implements Tool {
 			if (nRed>0){
 				conf.setNumReduceTasks(nRed);
 			}
-			
+
 			String paramFolder=conf.get(K_PARAMETERS_FOLDER);
 			if (paramFolder!=null) {// init params are specified
 				if(DistributedCacheUtils.loadParametersFolder(paramFolder, conf)==1)return 1;
@@ -191,7 +197,7 @@ public class Train extends Configured implements Tool {
 		try{
 			CommandLine cmd = new PosixParser().parse(options, args);
 
-			int	numIterations= Integer.parseInt(cmd.getOptionValue("N",D_N));
+			int	numIterations= Integer.parseInt(cmd.getOptionValue("N",""+D_N));
 			String inputDir = cmd.getOptionValue("i");
 			String outputDirPref = cmd.getOptionValue("o");
 
@@ -200,7 +206,8 @@ public class Train extends Configured implements Tool {
 			if (cmd.hasOption( "R" )) invariantConf.set(K_N_REDUCE,cmd.getOptionValue("R"));
 			if (cmd.hasOption( "p" )) invariantConf.set(K_PARAMETERS_FOLDER, cmd.getOptionValue("p")); //this is going to be overwritten for iterations different from the first
 			invariantConf.set(K_INPUT_FOLDER, inputDir);
-			
+			invariantConf.set(K_N_SENTENCE_ITERATIONS,cmd.getOptionValue("S",""+D_S));
+
 			Configuration conf;
 			for (int i = 0; i < numIterations; i++) {
 				conf= new Configuration(invariantConf);

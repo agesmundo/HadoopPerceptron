@@ -77,12 +77,12 @@ public class Evaluate extends Configured implements Tool {
 		@Override
 		public void configure(JobConf jc) {
 			conf = jc;
+			perceptron.readWeights(conf);
 		}
 
 		public void map(LongWritable key, Text value,
 				OutputCollector<Text, IntWritable> output, Reporter reporter)
 						throws IOException {
-			perceptron.readWeights(conf);
 
 			Sentence sentence = new Sentence(value.toString());
 			String predLabel = "";

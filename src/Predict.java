@@ -75,12 +75,12 @@ public class Predict extends Configured implements Tool {
 		@Override
 		public void configure(JobConf jc) {
 			conf = jc;
+			perceptron.readWeights(conf);
 		}
 
 		public void map(LongWritable key, Text value,
 				OutputCollector<Text, Text> output, Reporter reporter)
 						throws IOException {
-			perceptron.readWeights(conf);
 
 			StringBuilder out = new StringBuilder();
 			out.append("|||\t");
