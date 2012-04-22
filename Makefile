@@ -6,7 +6,6 @@ PREDICT_IN_DIR=${PRE}/test_folder
 TRAIN_OUT_DIR=${PRE}/train_out
 PREDICT_OUT_DIR=${PRE}/predict_out
 EVAL_OUT_DIR=${PRE}/evaluate_out
-#WEIGHT_IN=/init
 
 #assign to HADOOP_CORE the path to the hadoop core jar, e.g.:
 HADOOP_CORE=./jars/hadoop-core-1.0.1.jar
