@@ -110,14 +110,29 @@ public class Perceptron {
 			if (goldCand == null)
 				throw new IOException("null gold cand");
 			// update
-			standardUpdate(goldCand.features,topCand.features);
+			passiveAggressiveUpdate(goldCand,topCand);
 		}
 		return predicted;
 	}
 
-	void standardUpdate(List<String>promote, List<String>penalize){
-		updateFeat(promote, +1);
-		updateFeat(penalize, -1);
+	void passiveAggressiveUpdate(Candidate promote, Candidate penalize)throws IOException{
+		double margin = 1;//TODO move this
+		double loss = penalize.score-promote.score +margin;
+		double normSquare=promote.features.size()+penalize.features.size();//this holds for binary features
+		double alpha = loss/normSquare;
+		updateFeat(promote.features, +1*alpha);
+		updateFeat(penalize.features, -1*alpha);
+		
+		//debug
+		scoreCand(promote);
+		scoreCand(penalize);
+		if(penalize.score>promote.score+margin-0.01)throw new IOException("PA TEST FAIL:\npenalize: "+penalize.score+" ;promote: "+promote.score);
+		
+	}
+	
+	void standardUpdate(Candidate promote, Candidate penalize){
+		updateFeat(promote.features, +1);
+		updateFeat(penalize.features, -1);
 	}
 
 	private Candidate pickTop(List<Candidate> cands) throws NullPointerException {
