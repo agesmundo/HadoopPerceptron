@@ -23,7 +23,7 @@ $ hadoop jar jars/HP.jar Train -i <input_folder> -o <output_folder_prefix> [opti
 # to display the available options:
 $ hadoop jar jars/HP.jar Train -help
 
-# see details of INPUT FILES FORMAT below
+# see details of INPUT FILES FORMAT in the section below
 # the output of each train iteration can be found in "<output_folder_prefix>_<iteration_id>" where <iteration_id> starts from 1
 
 

@@ -94,7 +94,8 @@ public class Predict extends Configured implements Tool {
 						.getWord(i - 1), sentence.getWord(i), sentence
 						.getWord(i + 1), predLabel));
 
-				out.append(" " + predLabel);
+				if(i!=0)out.append(" ");
+				out.append(predLabel);
 			}
 
 			// <in sentence, sequence of labels>
