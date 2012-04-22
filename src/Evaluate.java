@@ -71,13 +71,13 @@ public class Evaluate extends Configured implements Tool {
 
 		private final static IntWritable one = new IntWritable(1);
 
-		private Perceptron perceptron = new Perceptron();
+		private LinearModel model = new LinearModel();
 		JobConf conf = null;
 
 		@Override
 		public void configure(JobConf jc) {
 			conf = jc;
-			perceptron.readWeights(conf);
+			model.readWeights(conf);
 		}
 
 		public void map(LongWritable key, Text value,
@@ -90,7 +90,7 @@ public class Evaluate extends Configured implements Tool {
 
 				String goldLabel = sentence.getGoldLabel(i);
 
-				predLabel = perceptron.predict(Features.getFeatures(sentence
+				predLabel = model.predict(Features.getFeatures(sentence
 						.getWord(i - 1), sentence.getWord(i), sentence
 						.getWord(i + 1), predLabel));
 
@@ -171,8 +171,8 @@ public class Evaluate extends Configured implements Tool {
 		}
 
 		catch( ParseException e ) {
-			System.err.println("\nError while parsing command line:\n"+e.getMessage()+"\n");
 			new HelpFormatter().printHelp( USAGE, options );
+			System.err.println("\n\nError while parsing command line:\n"+e.getMessage()+"\n");
 		}
 	}
 }

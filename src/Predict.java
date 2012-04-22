@@ -69,7 +69,7 @@ public class Predict extends Configured implements Tool {
 	public static class Map extends MapReduceBase implements
 	Mapper<LongWritable, Text, Text, Text> {
 
-		private Perceptron perceptron = new Perceptron();
+		private LinearModel perceptron = new LinearModel();
 		JobConf conf = null;
 
 		@Override
@@ -165,8 +165,8 @@ public class Predict extends Configured implements Tool {
 		}
 
 		catch( ParseException e ) {
-			System.err.println("\nError while parsing command line:\n"+e.getMessage()+"\n");
 			new HelpFormatter().printHelp( USAGE, options );
+			System.err.println("\n\nError while parsing command line:\n"+e.getMessage()+"\n");
 		}
 	}
 }

@@ -26,11 +26,16 @@ public class Train extends Configured implements Tool {
 	static final String K_N_MAP="HP.number.map.tasks";
 	static final String K_N_REDUCE="HP.number.reduce.tasks";
 	static final String K_N_SENTENCE_ITERATIONS="HP.number.sentence.iterations";
+	static final String K_PERCEPTRON_UPDATE="HP.perceptron.update";
 
 	//Defaul values for options
 	static final int D_N=1;
 	static final int D_S=1;
-
+	static final String D_u="P";
+	
+	//Range of values for options
+	static final String V_u="P|PA|AV";
+	
 	static Options options=initOptions();
 	private static Options initOptions(){
 		Options options = new Options();
@@ -80,18 +85,33 @@ public class Train extends Configured implements Tool {
 		OptionBuilder.withType(Integer.class);
 		options.addOption(OptionBuilder.create("R"));
 
+		OptionBuilder.withArgName("("+V_u+")");
+		OptionBuilder.hasArg(true);
+		OptionBuilder.withDescription("Set perceptron parameters update technique. Possible values are:" +
+				"\n\tP:  standard perceptron update." +
+				"\n\tPA: passive-aggressive perceptron update." +
+				"\n\tAV: averaged perceptron"+
+				"\n default value is "+D_u+".");
+		OptionBuilder.withType(Integer.class);
+		options.addOption(OptionBuilder.create("u"));
 		return options;
 	}
 
 	public static class Map extends MapReduceBase implements
 	Mapper<LongWritable, Text, Text, DoubleWritable> {
 
-		private Perceptron perceptron = new Perceptron();
+		private Perceptron perceptron;
 		JobConf conf = null;
 
 		@Override
 		public void configure(JobConf jc) {
 			conf = jc;
+			
+			String up = conf.get(K_PERCEPTRON_UPDATE);
+			if(up==null || up.equals("P"))	perceptron = new PerceptronStandard();
+			else if(up.equals("PA"))perceptron = new PerceptronPassiveAggressive();
+					
+			
 			if (conf.getBoolean(K_HAS_INPUT_PARAMS, false))
 				perceptron.readWeights(conf);
 		}
@@ -201,12 +221,16 @@ public class Train extends Configured implements Tool {
 			String outputDirPref = cmd.getOptionValue("o");
 
 			Configuration invariantConf= new Configuration();
+			invariantConf.set(K_INPUT_FOLDER, inputDir);
+			invariantConf.set(K_N_SENTENCE_ITERATIONS,cmd.getOptionValue("S",""+D_S));
 			if (cmd.hasOption( "M" )) invariantConf.set(K_N_MAP,cmd.getOptionValue("M"));
 			if (cmd.hasOption( "R" )) invariantConf.set(K_N_REDUCE,cmd.getOptionValue("R"));
 			if (cmd.hasOption( "p" )) invariantConf.set(K_PARAMETERS_FOLDER, cmd.getOptionValue("p")); //this is going to be overwritten for iterations different from the first
-			invariantConf.set(K_INPUT_FOLDER, inputDir);
-			invariantConf.set(K_N_SENTENCE_ITERATIONS,cmd.getOptionValue("S",""+D_S));
-
+			if (cmd.hasOption( "u" )){
+				if(!Arrays.asList(V_u.split("|")).contains(cmd.getOptionValue("u")))throw new ParseException("The allowed values for option -u are: ("+V_u+")");
+				invariantConf.set(K_PERCEPTRON_UPDATE, cmd.getOptionValue("u",D_u));
+			}
+				
 			Configuration conf;
 			for (int i = 0; i < numIterations; i++) {
 				conf= new Configuration(invariantConf);
@@ -221,12 +245,12 @@ public class Train extends Configured implements Tool {
 		}
 
 		catch( ParseException e ) {
-			System.err.println("\nError while parsing command line:\n"+e.getMessage()+"\n");
 			new HelpFormatter().printHelp( USAGE, options );
+			System.err.println("\n\nError while parsing command line:\n"+e.getMessage()+"\n");
 		}
 		catch( NumberFormatException e ) {
-			System.err.println("\nError while parsing command line:\n"+e.getMessage()+"\n");
 			new HelpFormatter().printHelp( USAGE, options );
+			System.err.println("\n\nError while parsing command line:\n"+e.getMessage()+"\n");
 		}
 	}
 
