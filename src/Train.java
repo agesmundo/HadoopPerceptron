@@ -15,6 +15,9 @@ import org.apache.commons.cli.ParseException;
 
 public class Train extends Configured implements Tool {
 
+	//Usage
+	static final String USAGE = "Train -i <input_folder> -o <output_folder> [options]";
+	
 	//Keys to find HadoopPerceptron options in the configuration
 	static final String K_HAS_INPUT_PARAMS="HP.has.input.params"; //TODO? useless?
 	static final String K_PARAMETERS_FOLDER="HP.parameters.folder";
@@ -30,6 +33,10 @@ public class Train extends Configured implements Tool {
 	static Options options=initOptions();
 	private static Options initOptions(){
 		Options options = new Options();
+
+		OptionBuilder.hasArg(false);
+		OptionBuilder.withDescription("Display usage.");
+		options.addOption(OptionBuilder.create("help"));
 
 		OptionBuilder.withArgName("input_folder");
 		OptionBuilder.hasArg(true);
@@ -133,6 +140,7 @@ public class Train extends Configured implements Tool {
 	}
 
 	public int run(String[] args) throws Exception {
+
 		try{
 			JobConf conf = new JobConf(getConf(), Train.class);
 			conf.setJobName("train");
@@ -176,7 +184,10 @@ public class Train extends Configured implements Tool {
 
 
 	public static void main(String[] args) throws Exception {
-
+		if(Arrays.asList(args).contains("-help")){
+			new HelpFormatter().printHelp( USAGE, options );
+			System.exit(0);
+		}
 		try{
 			CommandLine cmd = new PosixParser().parse(options, args);
 
@@ -203,16 +214,13 @@ public class Train extends Configured implements Tool {
 			System.exit(0);
 		}
 
-
 		catch( ParseException e ) {
 			System.err.println("\nError while parsing command line:\n"+e.getMessage()+"\n");
-			HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp( "Train -i <input_folder> -o <output_folder> [options]", options );
+			new HelpFormatter().printHelp( USAGE, options );
 		}
 		catch( NumberFormatException e ) {
 			System.err.println("\nError while parsing command line:\n"+e.getMessage()+"\n");
-			HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp( "Train -i <input_folder> -o <output_folder> [options]", options );
+			new HelpFormatter().printHelp( USAGE, options );
 		}
 	}
 

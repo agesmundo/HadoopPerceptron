@@ -14,7 +14,10 @@ import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.util.*;
 
 public class Predict extends Configured implements Tool {
-
+	
+	//Usage
+	static final String USAGE = "Predict -i <input_folder> -o <output_folder> -p <parameters_folder> [options]";
+			
 	//Keys to find HadoopPerceptron options in the configuration
 	static final String K_PARAMETERS_FOLDER="HP.parameters.folder";
 	static final String K_INPUT_FOLDER="HP.input.folder";
@@ -26,6 +29,10 @@ public class Predict extends Configured implements Tool {
 	private static Options initOptions(){
 		Options options = new Options();
 
+		OptionBuilder.hasArg(false);
+		OptionBuilder.withDescription("Display usage.");
+		options.addOption(OptionBuilder.create("help"));
+		
 		OptionBuilder.withArgName("input_folder");
 		OptionBuilder.hasArg(true);
 		OptionBuilder.withDescription("Folder in the hadoop dfs containing the text to be labelled.");
@@ -138,14 +145,12 @@ public class Predict extends Configured implements Tool {
 	}
 
 	public static void main(String[] args) throws Exception {
+		if(Arrays.asList(args).contains("-help")){
+			new HelpFormatter().printHelp( USAGE, options );
+			System.exit(0);
+		}
 		try{
 			CommandLine cmd = new PosixParser().parse(options, args);
-
-//			if (args.length != 3) {
-//				throw new Exception(
-//						"Wrong number of arguments.\n "
-//								+ "Usage: Predict <input_folder> <outout_folder> <weight_folder>");
-//			}
 
 			Configuration conf= new Configuration();
 			conf.set(K_INPUT_FOLDER, cmd.getOptionValue("i"));
@@ -160,8 +165,7 @@ public class Predict extends Configured implements Tool {
 
 		catch( ParseException e ) {
 			System.err.println("\nError while parsing command line:\n"+e.getMessage()+"\n");
-			HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp( "Predict -i <input_folder> -o <output_folder> -p <parameters_folder> [options]", options );
+			new HelpFormatter().printHelp( USAGE, options );
 		}
 	}
 }
