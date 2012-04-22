@@ -107,11 +107,10 @@ public class Train extends Configured implements Tool {
 				prevPredLabel = "";
 
 				for (int i = 0; i < sentence.size(); i++) {
-
 					prevPredLabel = perceptron.train(Features.getFeatures(
-							sentence.getWord(i - 1), 
-							sentence.getWord(i), 
-							sentence.getWord(i + 1), 
+							sentence.getWord(i - 1),
+							sentence.getWord(i),
+							sentence.getWord(i + 1),
 							prevPredLabel
 							),
 							sentence.getGoldLabel(i));

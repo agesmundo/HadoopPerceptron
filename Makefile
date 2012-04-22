@@ -23,7 +23,7 @@ jc:
 put:
 	hadoop fs -put test/ /
 train:jr clean_tr
-	hadoop jar jars/${JAR} Train -i ${TRAIN_IN_DIR} -o ${TRAIN_OUT_DIR} -N ${ITERS} -S 3
+	hadoop jar jars/${JAR} Train -i ${TRAIN_IN_DIR} -o ${TRAIN_OUT_DIR} -N ${ITERS}
 predict:jr clean_pr
 	hadoop jar jars/${JAR} Predict -i ${PREDICT_IN_DIR} -o ${PREDICT_OUT_DIR} -p ${TRAIN_OUT_DIR}_${ITERS}
 evaluate:jr

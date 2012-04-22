@@ -22,11 +22,11 @@ import org.apache.hadoop.util.StringUtils;
 public class Perceptron {
 
 	// constants
-	private final int FEAT_HASH_INIT = 10;// 1000000;
+	private final int FEAT_HASH_INIT = 1000;// 1000000;
 
 	// variables
 	private Map<String, Integer> feat2id;
-	ArrayList<Feat> id2feat;
+	private ArrayList<Feat> id2feat;
 
 	// ////////////////////////////////////////////////////////////
 	// Constructors
@@ -66,8 +66,7 @@ public class Perceptron {
 			throws IOException {
 		for (int i = 0; i < id2feat.size(); i++) {
 			Feat feat = id2feat.get(i);
-			output.collect(new Text(feat.featstr), new DoubleWritable(
-					feat.weight));
+			output.collect(new Text(feat.featstr), new DoubleWritable(feat.weight));
 		}
 	}
 
@@ -117,19 +116,23 @@ public class Perceptron {
 
 		return predicted;
 	}
+	
+	void StandardUpdate(){
+		
+	}
 
-	private Candidate pickTop(List<Candidate> cands) throws IOException {
-		double topOpScore = Double.NEGATIVE_INFINITY;
-		Candidate topCand = null;
-		for (int i = 0; i < cands.size(); i++) {
+	private Candidate pickTop(List<Candidate> cands) throws NullPointerException {
+		if (cands.size() == 0)
+			throw new NullPointerException("\nError:\nThe list of candidates is empty.");
+		Candidate topCand = cands.get(0);
+		double topOpScore = topCand.getScore();
+		for (int i = 1; i < cands.size(); i++) {
 			Candidate cand = cands.get(i);
 			if (cand.getScore() > topOpScore) {
 				topOpScore = cand.getScore();
 				topCand = cand;
 			}
 		}
-		if (topCand == null)
-			throw new IOException("null top cand");
 		return topCand;
 	}
 
@@ -184,18 +187,19 @@ public class Perceptron {
 	// }
 
 	/**
-	 * Add a feature to the library.
+	 * Given the string of the feature, 
+	 * returns the id.
+	 * If the feature is new, the method registers the feature and returns the id. 
 	 * 
 	 * @param feat
 	 *            Name of the feature.
 	 * @return The index of the feature.
 	 */
-	private int regFeat(String feat) {
+	private int getAndRegFeatID(String feat) {
 		Integer id = (Integer) feat2id.get(feat);
 		// if already in the lib
 		if (id != null) {
-			int idx = id.intValue();
-			return idx;
+			return id.intValue();
 		}
 		// if not in the lib update the HT and the List
 		id = new Integer(id2feat.size());
@@ -281,10 +285,7 @@ public class Perceptron {
 
 		for (int i = 0; i < feats.size(); i++) {
 			String onefeat = feats.get(i);
-			int feaid = getFeatID(onefeat);
-			if (feaid == -1) {
-				feaid = regFeat(onefeat);
-			}
+			int feaid = getAndRegFeatID(onefeat);;
 			Feat feat = id2feat.get(feaid);
 			feat.weight += para;
 		}
