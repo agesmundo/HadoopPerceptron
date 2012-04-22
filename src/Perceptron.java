@@ -110,15 +110,14 @@ public class Perceptron {
 			if (goldCand == null)
 				throw new IOException("null gold cand");
 			// update
-			updateFeat(goldCand.features, +1);
-			updateFeat(topCand.features, -1);
+			standardUpdate(goldCand.features,topCand.features);
 		}
-
 		return predicted;
 	}
-	
-	void StandardUpdate(){
-		
+
+	void standardUpdate(List<String>promote, List<String>penalize){
+		updateFeat(promote, +1);
+		updateFeat(penalize, -1);
 	}
 
 	private Candidate pickTop(List<Candidate> cands) throws NullPointerException {
