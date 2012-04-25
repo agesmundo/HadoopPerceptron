@@ -92,11 +92,14 @@ public class Train extends Configured implements Tool {
 		OptionBuilder.hasArg(true);
 		OptionBuilder.withDescription("Set perceptron parameters update technique. Possible values are:" +
 				"\n\tP:  standard perceptron update." +
-				"\n\tPA: passive-aggressive perceptron update." +
 				"\n\tAV: averaged perceptron"+
+				"\n\tPA: passive-aggressive perceptron update." +
+				"\n\tPA1: passive-aggressive 1 (with slack variable). use parametere -C to set the slack variable." +
+				"\n\tPA2: passive-aggressive 2 (with quadratic slack variable). use parametere -C to set the slack variable." +
 				"\n default value is "+D_P+".");
 		OptionBuilder.withType(Integer.class);
 		options.addOption(OptionBuilder.create("P"));
+		
 		return options;
 	}
 
@@ -112,8 +115,10 @@ public class Train extends Configured implements Tool {
 			
 			String pType = conf.get(K_PERCEPTRON_TYPE);
 			if(pType==null || pType.equals("P"))	perceptron = new PerceptronStandard();
-			else if(pType.equals("PA"))perceptron = new PerceptronPassiveAggressive();
 			else if(pType.equals("AV"))perceptron = new PerceptronAveraged();
+			else if(pType.equals("PA"))perceptron = new PerceptronPassiveAggressive();
+			else if(pType.equals("PA1"))perceptron = new PerceptronPassiveAggressive1();
+			else if(pType.equals("PA2"))perceptron = new PerceptronPassiveAggressive2();
 			
 			if (conf.getBoolean(K_HAS_INPUT_PARAMS, false))
 				perceptron.readWeights(conf);
@@ -232,6 +237,8 @@ public class Train extends Configured implements Tool {
 			if (cmd.hasOption( "P" )){
 				if(!Arrays.asList(V_P.split("\\|")).contains(cmd.getOptionValue("P")))throw new ParseException("The allowed values for option -P are: ("+V_P+")");
 				invariantConf.set(K_PERCEPTRON_TYPE, cmd.getOptionValue("P"));
+			}else{
+				invariantConf.set(K_PERCEPTRON_TYPE,D_P);
 			}
 				
 			Configuration conf;
