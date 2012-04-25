@@ -1,8 +1,12 @@
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class PerceptronPassiveAggressive extends Perceptron{
+	
 	void update(Candidate promote, Candidate penalize){
+		List<Double> xxx = new ArrayList<Double>();xxx.get(100);
 		double margin = 1;//TODO move this
 		double loss = penalize.score-promote.score +margin;
 		double normSquare=promote.features.size()+penalize.features.size();//this holds for binary features

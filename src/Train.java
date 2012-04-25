@@ -1,8 +1,5 @@
 import java.io.IOException;
 import java.util.*;
-
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.mapred.FileAlreadyExistsException;
 import org.apache.hadoop.conf.*;
@@ -30,14 +27,16 @@ public class Train extends Configured implements Tool {
 	static final String K_N_REDUCE="HP.number.reduce.tasks";
 	static final String K_N_SENTENCE_ITERATIONS="HP.number.sentence.iterations";
 	static final String K_PERCEPTRON_TYPE="HP.perceptron.type";
+	static final String K_SLACK="HP.passive.aggressive.slack.variable";
 
 	//Defaul values for options
 	static final int D_N=1;
 	static final int D_S=1;
+	static final float D_C=2;
 	static final String D_P="P";
 	
 	//Range of values for options
-	static final String V_P="P|PA|AV";
+	static final String V_P="P|AV|PA|PA1|PA2";
 	
 	static Options options=initOptions();
 	private static Options initOptions(){
@@ -61,7 +60,7 @@ public class Train extends Configured implements Tool {
 
 		OptionBuilder.withArgName("integer");
 		OptionBuilder.hasArg(true);
-		OptionBuilder.withDescription("Number of times the training is consecutively repeated on a single sentence by a map task. default value is "+D_S+".");
+		OptionBuilder.withDescription("Number of times the training is repeated on each sentence by a map worker. default value is "+D_S+".");
 		OptionBuilder.withType(Integer.class);
 		options.addOption(OptionBuilder.create("S"));
 
@@ -100,6 +99,12 @@ public class Train extends Configured implements Tool {
 		OptionBuilder.withType(Integer.class);
 		options.addOption(OptionBuilder.create("P"));
 		
+		OptionBuilder.withArgName("float");
+		OptionBuilder.hasArg(true);
+		OptionBuilder.withDescription("Set slack variable for PA1 and PA2. default value is "+D_C+".");
+		OptionBuilder.withType(Double.class);
+		options.addOption(OptionBuilder.create("C"));
+
 		return options;
 	}
 
@@ -117,8 +122,8 @@ public class Train extends Configured implements Tool {
 			if(pType==null || pType.equals("P"))	perceptron = new PerceptronStandard();
 			else if(pType.equals("AV"))perceptron = new PerceptronAveraged();
 			else if(pType.equals("PA"))perceptron = new PerceptronPassiveAggressive();
-			else if(pType.equals("PA1"))perceptron = new PerceptronPassiveAggressive1();
-			else if(pType.equals("PA2"))perceptron = new PerceptronPassiveAggressive2();
+			else if(pType.equals("PA1"))perceptron = new PerceptronPassiveAggressive1(conf.getFloat(K_SLACK,D_C));
+			else if(pType.equals("PA2"))perceptron = new PerceptronPassiveAggressive2(conf.getFloat(K_SLACK,D_C));
 			
 			if (conf.getBoolean(K_HAS_INPUT_PARAMS, false))
 				perceptron.readWeights(conf);
@@ -233,6 +238,7 @@ public class Train extends Configured implements Tool {
 			invariantConf.set(K_N_SENTENCE_ITERATIONS,cmd.getOptionValue("S",""+D_S));
 			if (cmd.hasOption( "M" )) invariantConf.set(K_N_MAP,cmd.getOptionValue("M"));
 			if (cmd.hasOption( "R" )) invariantConf.set(K_N_REDUCE,cmd.getOptionValue("R"));
+			if (cmd.hasOption( "C" )) invariantConf.set(K_SLACK,cmd.getOptionValue("C"));
 			if (cmd.hasOption( "p" )) invariantConf.set(K_PARAMETERS_FOLDER, cmd.getOptionValue("p")); //this is going to be overwritten for iterations different from the first
 			if (cmd.hasOption( "P" )){
 				if(!Arrays.asList(V_P.split("\\|")).contains(cmd.getOptionValue("P")))throw new ParseException("The allowed values for option -P are: ("+V_P+")");
